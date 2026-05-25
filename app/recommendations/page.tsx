@@ -99,7 +99,7 @@ export default function RecommendationsPage() {
           <p className="text-sm font-bold uppercase tracking-wide text-berry">Recommendations</p>
           <h1 className="mt-2 text-3xl font-bold text-ink">Plan what to read next</h1>
           <p className="mt-2 text-ink/65">
-            Add books, review the current reading selection, and keep a Wish List for what to buy or borrow next.
+            Add any book your family wants to track, review the current reading selection, and keep a Wish List for what to buy or borrow next.
             Comfort reads use AR {recommendations.range.comfort.min.toFixed(1)}-{recommendations.range.comfort.max.toFixed(1)}.
             Next step books use AR {recommendations.range.nextStep.min.toFixed(1)}-{recommendations.range.nextStep.max.toFixed(1)}, just above the current range.
           </p>
@@ -111,7 +111,7 @@ export default function RecommendationsPage() {
         <div className="mb-3">
           <h2 className="text-xl font-bold text-ink">Add a Book</h2>
           <p className="mt-1 text-sm text-ink/60">
-            Add books you own, borrowed books, or titles you want to track. AR/ATOS can auto-fill from your local list when available, but should still be verified.
+            Add any book here, including books you already own, library books, school books, or titles you found outside these recommendations. AR/ATOS can auto-fill from your local list when available, but should still be verified.
           </p>
         </div>
         <BookForm onSave={upsertBook} existingBooks={data.books} />

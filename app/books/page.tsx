@@ -116,8 +116,8 @@ export default function BooksPage() {
       <section className="rounded-lg border border-ink/10 bg-white p-4 shadow-soft">
         <div className="grid gap-3 lg:grid-cols-[1fr_220px_260px]">
           <label>
-            <span className="text-sm font-semibold text-ink/70">Search books</span>
-            <input className="focus-ring mt-1 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Title, author, series, theme" />
+            <span className="text-sm font-semibold text-ink/70">Search your shelf for today's read</span>
+            <input className="focus-ring mt-1 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Saved title, author, series, or theme" />
           </label>
           <label>
             <span className="text-sm font-semibold text-ink/70">Theme</span>
@@ -138,7 +138,7 @@ export default function BooksPage() {
           </div>
         </div>
         <p className="mt-3 text-sm text-ink/60">
-          Books are ranked by most recent read date first, then read count, then alphabetically.
+          This searches books already on your current shelf. To add a new book first, go to the Recommendations tab. Books are ranked by most recent read date first, then read count, then alphabetically.
         </p>
       </section>
 

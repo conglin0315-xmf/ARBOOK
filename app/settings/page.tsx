@@ -3,14 +3,28 @@
 import { FormEvent, useEffect, useState } from "react";
 import { ChildSelector } from "@/components/ChildSelector";
 import { useAppData } from "@/lib/AppContext";
-import { exportData, importData } from "@/lib/storage";
-import type { ChildProfile } from "@/lib/types";
+import { exportData, importData, STORAGE_KEY } from "@/lib/storage";
+import type { AppData, ChildProfile } from "@/lib/types";
 import { formatTags, makeId, splitTags } from "@/lib/utils";
 
 export default function SettingsPage() {
-  const { data, selectedChild, upsertChild, replaceData } = useAppData();
+  const { data, selectedChild, upsertChild, replaceData, isCloudSyncEnabled } = useAppData();
   const [backup, setBackup] = useState("");
+  const [localBackup, setLocalBackup] = useState<AppData | undefined>();
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+
+    try {
+      const parsed = importData(raw);
+      setLocalBackup(parsed);
+    } catch {
+      setLocalBackup(undefined);
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -31,6 +45,27 @@ export default function SettingsPage() {
         upsertChild(child);
         setMessage("Child profile saved.");
       }} />
+
+      {isCloudSyncEnabled && localBackup ? (
+        <section className="rounded-lg border border-leaf/25 bg-skysoft p-4 shadow-soft">
+          <h2 className="text-lg font-bold text-ink">Move This Browser's Old Data To Cloud</h2>
+          <p className="mt-1 text-sm text-ink/65">
+            Found a local browser backup with {localBackup.children.length} child profile{localBackup.children.length === 1 ? "" : "s"},
+            {" "}{localBackup.books.length} book{localBackup.books.length === 1 ? "" : "s"}, and {localBackup.logs.length} reading session{localBackup.logs.length === 1 ? "" : "s"}.
+            Use this once if your phone or Vercel site has fewer books than this Mac.
+          </p>
+          <button
+            className="mt-4 rounded-lg bg-leaf px-4 py-2 text-sm font-semibold text-white"
+            type="button"
+            onClick={() => {
+              replaceData(localBackup);
+              setMessage("Local browser data moved to Supabase. Refresh your phone after a few seconds.");
+            }}
+          >
+            Move local data to cloud
+          </button>
+        </section>
+      ) : null}
 
       <section className="rounded-lg border border-ink/10 bg-white p-4 shadow-soft">
         <h2 className="text-lg font-bold text-ink">Export or import JSON backup</h2>

@@ -102,65 +102,23 @@ export default function RecommendationsPage() {
           <p className="text-sm font-bold uppercase tracking-wide text-berry">Recommendations</p>
           <h1 className="mt-2 text-3xl font-bold text-ink">Plan what to read next</h1>
           <p className="mt-2 text-ink/65">
-            Add any book your family wants to track, review the current reading selection, and keep a Wish List for what to buy or borrow next.
+            Start with books matched to the current reading range, add any missing title your family wants, then keep a Wish List for what to buy or borrow next.
             Comfort reads use AR {recommendations.range.comfort.min.toFixed(1)}-{recommendations.range.comfort.max.toFixed(1)}.
-            Next step books use AR {recommendations.range.nextStep.min.toFixed(1)}-{recommendations.range.nextStep.max.toFixed(1)}, just above the current range.
+            Next level reads use AR {recommendations.range.nextStep.min.toFixed(1)}-{recommendations.range.nextStep.max.toFixed(1)}, just above the current range.
           </p>
         </div>
         <ChildSelector />
       </section>
 
-      <section>
-        <div className="mb-3">
-          <h2 className="text-xl font-bold text-ink">Add a Book</h2>
-          <p className="mt-1 text-sm text-ink/60">
-            Add any book here, including books you already own, library books, school books, or titles you found outside these recommendations. AR/ATOS can auto-fill from your local list when available, but should still be verified.
-          </p>
-        </div>
-        <BookForm onSave={upsertBook} existingBooks={data.books} />
-      </section>
-
-      <BookSelectionSection
-        title="Current Reading Selection"
-        helper="Books already in the active reading list. Session logging lives in the Sessions tab."
-        books={readingBooks}
-        allBooks={data.books}
-        readCounts={readCounts}
-        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
-        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
-      />
-
-      <BookSelectionSection
-        title="Wish List"
-        helper="Books to consider buying or borrowing next. Verify AR/ATOS here so they can feed Comfort Reads and Next Step Books."
-        books={wishListBooks}
-        allBooks={data.books}
-        readCounts={readCounts}
-        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
-        onUpdateArLevel={(book, arLevel) => upsertBook({ ...book, arLevel })}
-        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
-        onRemove={(book) => removeBook(book.id)}
-      />
-
-      <BookSelectionSection
-        title="Past Reads"
-        helper="Books read before, returned to the library, or no longer in the current rotation."
-        books={archivedBooks}
-        allBooks={data.books}
-        readCounts={readCounts}
-        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
-        onMoveToReading={(book) => upsertBook({ ...book, shelf: "reading" })}
-      />
-
       <RecommendationSection
         title="Comfort Reads"
-        helper="From verified Wish List books or local catalog entries whose listed BL range overlaps the current reading range."
+        helper="Start here. These are verified Wish List books or local catalog entries whose listed BL range overlaps the current reading range."
         items={recommendations.comfortReads}
         onAddToWishList={addRecommendationToWishList}
       />
       <RecommendationSection
-        title="Next Step Books"
-        helper="From verified Wish List books or local catalog entries whose listed BL range overlaps 0.1-0.3 above the current max."
+        title="Next Level Reads"
+        helper="Try these when today's books feel easy. These use verified Wish List books or local catalog entries 0.1-0.3 above the current max."
         items={recommendations.nextStepBooks}
         onAddToWishList={addRecommendationToWishList}
       />
@@ -183,6 +141,48 @@ export default function RecommendationsPage() {
         onAdd={addDiscovery}
       />
       <RecommendationSection title="Repeat Favorites" items={recommendations.repeatFavorites} />
+
+      <section>
+        <div className="mb-3">
+          <h2 className="text-xl font-bold text-ink">Add a Book</h2>
+          <p className="mt-1 text-sm text-ink/60">
+            If the book you want is not recommended above, add it here. You can add books you already own, library books, school books, or titles you found elsewhere. AR/ATOS can auto-fill from your local list when available, but should still be verified.
+          </p>
+        </div>
+        <BookForm onSave={upsertBook} existingBooks={data.books} />
+      </section>
+
+      <BookSelectionSection
+        title="Wish List"
+        helper="Books to consider buying or borrowing next. Verify AR/ATOS here so they can feed Comfort Reads and Next Level Reads."
+        books={wishListBooks}
+        allBooks={data.books}
+        readCounts={readCounts}
+        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
+        onUpdateArLevel={(book, arLevel) => upsertBook({ ...book, arLevel })}
+        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
+        onRemove={(book) => removeBook(book.id)}
+      />
+
+      <BookSelectionSection
+        title="Current Reading Selection"
+        helper="Books already in the active reading list. Session logging lives in the Sessions tab."
+        books={readingBooks}
+        allBooks={data.books}
+        readCounts={readCounts}
+        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
+        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
+      />
+
+      <BookSelectionSection
+        title="Past Reads"
+        helper="Books read before, returned to the library, or no longer in the current rotation."
+        books={archivedBooks}
+        allBooks={data.books}
+        readCounts={readCounts}
+        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
+        onMoveToReading={(book) => upsertBook({ ...book, shelf: "reading" })}
+      />
     </div>
   );
 }

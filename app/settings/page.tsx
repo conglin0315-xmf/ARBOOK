@@ -46,6 +46,20 @@ export default function SettingsPage() {
         setMessage("Child profile saved.");
       }} />
 
+      <section className="rounded-lg border border-ink/10 bg-white p-4 shadow-soft">
+        <h2 className="text-lg font-bold text-ink">Sync Status</h2>
+        <p className="mt-1 text-sm text-ink/65">
+          {isCloudSyncEnabled
+            ? "Cloud sync is on. Changes should save to Supabase and appear on phone after refresh."
+            : "Cloud sync is off. This browser is using localStorage only."}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-ink/70">{data.children.length} child profile{data.children.length === 1 ? "" : "s"}</span>
+          <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-ink/70">{data.books.length} saved book{data.books.length === 1 ? "" : "s"}</span>
+          <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-ink/70">{data.logs.length} reading session{data.logs.length === 1 ? "" : "s"}</span>
+        </div>
+      </section>
+
       {isCloudSyncEnabled && localBackup ? (
         <section className="rounded-lg border border-leaf/25 bg-skysoft p-4 shadow-soft">
           <h2 className="text-lg font-bold text-ink">Move This Browser's Old Data To Cloud</h2>

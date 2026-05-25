@@ -63,10 +63,13 @@ export default function RecommendationsPage() {
   const seriesProgressions = getSeriesProgressions(data, selectedChild);
   const readCounts = getReadCountByBook(data.logs, selectedChild.id);
   const readingBooks = data.books
-    .filter((book) => book.shelf !== "wishlist")
+    .filter((book) => book.shelf !== "wishlist" && book.shelf !== "archive")
     .sort((a, b) => a.title.localeCompare(b.title));
   const wishListBooks = data.books
     .filter((book) => book.shelf === "wishlist")
+    .sort((a, b) => a.title.localeCompare(b.title));
+  const archivedBooks = data.books
+    .filter((book) => book.shelf === "archive")
     .sort((a, b) => a.title.localeCompare(b.title));
 
   function addDiscovery(book: DiscoveryBook) {
@@ -124,6 +127,7 @@ export default function RecommendationsPage() {
         allBooks={data.books}
         readCounts={readCounts}
         onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
+        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
       />
 
       <BookSelectionSection
@@ -134,7 +138,18 @@ export default function RecommendationsPage() {
         readCounts={readCounts}
         onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
         onUpdateArLevel={(book, arLevel) => upsertBook({ ...book, arLevel })}
+        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
         onRemove={(book) => removeBook(book.id)}
+      />
+
+      <BookSelectionSection
+        title="Past Reads"
+        helper="Books read before, returned to the library, or no longer in the current rotation."
+        books={archivedBooks}
+        allBooks={data.books}
+        readCounts={readCounts}
+        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
+        onMoveToReading={(book) => upsertBook({ ...book, shelf: "reading" })}
       />
 
       <RecommendationSection
@@ -180,6 +195,8 @@ function BookSelectionSection({
   readCounts,
   onUpdateSeries,
   onUpdateArLevel,
+  onMoveToArchive,
+  onMoveToReading,
   onRemove
 }: {
   title: string;
@@ -189,6 +206,8 @@ function BookSelectionSection({
   readCounts: Record<string, number>;
   onUpdateSeries?: (book: Book, series: string | undefined) => void;
   onUpdateArLevel?: (book: Book, arLevel: number | undefined) => void;
+  onMoveToArchive?: (book: Book) => void;
+  onMoveToReading?: (book: Book) => void;
   onRemove?: (book: Book) => void;
 }) {
   return (
@@ -209,6 +228,8 @@ function BookSelectionSection({
               readCount={readCounts[book.id] ?? 0}
               onUpdateSeries={onUpdateSeries}
               onUpdateArLevel={onUpdateArLevel}
+              onMoveToArchive={onMoveToArchive}
+              onMoveToReading={onMoveToReading}
               suggestedSeries={inferSeriesForBook(book, allBooks)}
               onRemove={onRemove}
             />

@@ -25,7 +25,7 @@ export type Book = {
   id: string;
   title: string;
   author: string;
-  shelf?: "reading" | "wishlist";
+  shelf?: "reading" | "wishlist" | "archive";
   isbn?: string;
   series?: string;
   arLevel?: number;

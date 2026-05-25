@@ -27,7 +27,7 @@ type BookRow = {
   ar_points: number | null;
   cover_url: string | null;
   themes: string[] | null;
-  shelf: "reading" | "wishlist" | null;
+  shelf: "reading" | "wishlist" | "archive" | null;
 };
 
 type ReadingLogRow = {

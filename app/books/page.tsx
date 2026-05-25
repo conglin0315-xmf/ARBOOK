@@ -52,8 +52,9 @@ export default function BooksPage() {
         return a.title.localeCompare(b.title);
       });
   }, [data.books, latestReadTimeByBook, query, readCounts, readStatus, theme]);
-  const readingBooks = filteredBooks.filter((book) => book.shelf !== "wishlist");
+  const readingBooks = filteredBooks.filter((book) => book.shelf !== "wishlist" && book.shelf !== "archive");
   const wishListBooks = filteredBooks.filter((book) => book.shelf === "wishlist");
+  const archivedBooks = filteredBooks.filter((book) => book.shelf === "archive");
 
   const readBookTotal = data.books.filter((book) => (readCounts[book.id] ?? 0) > 0).length;
   const unreadBookTotal = data.books.length - readBookTotal;
@@ -138,13 +139,13 @@ export default function BooksPage() {
           </div>
         </div>
         <p className="mt-3 text-sm text-ink/60">
-          This searches books already on your current shelf. To add a new book first, go to the Recommendations tab. Books are ranked by most recent read date first, then read count, then alphabetically.
+          This searches books already saved in your shelves. To add a new book first, go to the Recommendations tab. Books are ranked by most recent read date first, then read count, then alphabetically.
         </p>
       </section>
 
       <BookShelfSection
         title="Reading"
-        helper="Books in active reading history, sorted by read count."
+        helper="Books in the current reading rotation, ranked by most recent read date first."
         books={readingBooks}
         allBooks={data.books}
         readCounts={readCounts}
@@ -152,6 +153,7 @@ export default function BooksPage() {
         onQuickAddRead={selectedChild ? quickAddRead : undefined}
         onQuickRemoveRead={selectedChild ? quickRemoveRead : undefined}
         onUpdateSeries={(book, seriesValue) => upsertBook({ ...book, series: seriesValue })}
+        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
       />
 
       <BookShelfSection
@@ -165,7 +167,18 @@ export default function BooksPage() {
         onQuickRemoveRead={selectedChild ? quickRemoveRead : undefined}
         onUpdateSeries={(book, seriesValue) => upsertBook({ ...book, series: seriesValue })}
         onUpdateArLevel={(book, arLevel) => upsertBook({ ...book, arLevel })}
+        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
         onRemove={(book) => removeBook(book.id)}
+      />
+
+      <BookShelfSection
+        title="Past Reads"
+        helper="Books read before, returned to the library, or no longer in the current rotation."
+        books={archivedBooks}
+        allBooks={data.books}
+        readCounts={readCounts}
+        onUpdateSeries={(book, seriesValue) => upsertBook({ ...book, series: seriesValue })}
+        onMoveToReading={(book) => upsertBook({ ...book, shelf: "reading" })}
       />
 
       {sessionBook && selectedChild ? (
@@ -222,6 +235,8 @@ function BookShelfSection({
   onQuickRemoveRead,
   onUpdateSeries,
   onUpdateArLevel,
+  onMoveToArchive,
+  onMoveToReading,
   onRemove
 }: {
   title: string;
@@ -234,6 +249,8 @@ function BookShelfSection({
   onQuickRemoveRead?: (book: Book) => void;
   onUpdateSeries?: (book: Book, series: string | undefined) => void;
   onUpdateArLevel?: (book: Book, arLevel: number | undefined) => void;
+  onMoveToArchive?: (book: Book) => void;
+  onMoveToReading?: (book: Book) => void;
   onRemove?: (book: Book) => void;
 }) {
   return (
@@ -257,6 +274,8 @@ function BookShelfSection({
               onQuickRemoveRead={onQuickRemoveRead}
               onUpdateSeries={onUpdateSeries}
               onUpdateArLevel={onUpdateArLevel}
+              onMoveToArchive={onMoveToArchive}
+              onMoveToReading={onMoveToReading}
               suggestedSeries={inferSeriesForBook(book, allBooks)}
               onRemove={onRemove}
             />

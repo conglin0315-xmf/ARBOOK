@@ -11,6 +11,8 @@ type BookCardProps = {
   onQuickRemoveRead?: (book: Book) => void;
   onUpdateArLevel?: (book: Book, arLevel: number | undefined) => void;
   onUpdateSeries?: (book: Book, series: string | undefined) => void;
+  onMoveToArchive?: (book: Book) => void;
+  onMoveToReading?: (book: Book) => void;
   suggestedSeries?: string;
   onRemove?: (book: Book) => void;
 };
@@ -23,6 +25,8 @@ export function BookCard({
   onQuickRemoveRead,
   onUpdateArLevel,
   onUpdateSeries,
+  onMoveToArchive,
+  onMoveToReading,
   suggestedSeries,
   onRemove
 }: BookCardProps) {
@@ -171,6 +175,26 @@ export function BookCard({
             onClick={() => onMarkRead(book)}
           >
             Add session details
+          </button>
+        ) : null}
+
+        {onMoveToArchive ? (
+          <button
+            className="rounded-lg border border-ink/15 px-4 py-2 text-sm font-semibold text-ink/65 transition hover:bg-cream hover:text-ink"
+            type="button"
+            onClick={() => onMoveToArchive(book)}
+          >
+            Move to Past Reads
+          </button>
+        ) : null}
+
+        {onMoveToReading ? (
+          <button
+            className="rounded-lg border border-leaf/25 px-4 py-2 text-sm font-semibold text-leaf transition hover:bg-leaf hover:text-white"
+            type="button"
+            onClick={() => onMoveToReading(book)}
+          >
+            Move to Reading
           </button>
         ) : null}
 

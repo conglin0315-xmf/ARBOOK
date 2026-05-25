@@ -76,11 +76,21 @@ export default function DashboardPage() {
             stats.recentLogs.map((log) => {
               const book = bookById.get(log.bookId);
               return (
-                <div key={log.id} className="rounded-lg bg-cream p-3">
-                  <p className="font-semibold text-ink">{book?.title ?? "Unknown book"}</p>
-                  <p className="text-sm text-ink/65">
-                    {log.readDate} · {label(log.readingMode)} · liked {log.likedScore}/5 · {label(log.difficulty)}
-                  </p>
+                <div key={log.id} className="flex gap-3 rounded-lg bg-cream p-3">
+                  <div className="flex h-16 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-skysoft text-center text-[10px] font-semibold text-ink/55">
+                    {book?.coverUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={book.coverUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      "Book"
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-ink">{book?.title ?? "Unknown book"}</p>
+                    <p className="text-sm text-ink/65">
+                      {log.readDate} · {label(log.readingMode)} · liked {log.likedScore}/5 · {label(log.difficulty)}
+                    </p>
+                  </div>
                 </div>
               );
             })

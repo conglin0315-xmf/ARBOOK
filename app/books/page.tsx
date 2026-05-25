@@ -18,6 +18,13 @@ export default function BooksPage() {
   const [sessionBook, setSessionBook] = useState<Book | undefined>();
 
   const readCounts = getReadCountByBook(data.logs, selectedChild?.id);
+  const latestReadTimeByBook = useMemo(() => {
+    return data.logs.reduce<Record<string, number>>((acc, log) => {
+      if (selectedChild?.id && log.childId !== selectedChild.id) return acc;
+      acc[log.bookId] = Math.max(acc[log.bookId] ?? 0, getLogSortTime(log));
+      return acc;
+    }, {});
+  }, [data.logs, selectedChild?.id]);
   const themes = Array.from(new Set(data.books.flatMap((book) => book.themes))).sort();
   const filteredBooks = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -35,12 +42,16 @@ export default function BooksPage() {
         return matchesText && matchesTheme && matchesStatus;
       })
       .sort((a, b) => {
+        const aLatestRead = latestReadTimeByBook[a.id] ?? 0;
+        const bLatestRead = latestReadTimeByBook[b.id] ?? 0;
+        if (aLatestRead !== bLatestRead) return bLatestRead - aLatestRead;
+
         const aReads = readCounts[a.id] ?? 0;
         const bReads = readCounts[b.id] ?? 0;
         if (aReads !== bReads) return bReads - aReads;
         return a.title.localeCompare(b.title);
       });
-  }, [data.books, query, readCounts, readStatus, theme]);
+  }, [data.books, latestReadTimeByBook, query, readCounts, readStatus, theme]);
   const readingBooks = filteredBooks.filter((book) => book.shelf !== "wishlist");
   const wishListBooks = filteredBooks.filter((book) => book.shelf === "wishlist");
 
@@ -127,7 +138,7 @@ export default function BooksPage() {
           </div>
         </div>
         <p className="mt-3 text-sm text-ink/60">
-          Books are ranked by read count first, then alphabetically. Unread books appear after read books.
+          Books are ranked by most recent read date first, then read count, then alphabetically.
         </p>
       </section>
 

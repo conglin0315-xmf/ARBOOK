@@ -344,10 +344,19 @@ function getPercentComparison(current: number, prior: number) {
 }
 
 function getLogSortTime(log: ReadingLog) {
-  const value = log.createdAt ?? `${log.readDate}T00:00:00`;
-  const time = new Date(value).getTime();
-  if (!Number.isNaN(time)) return time;
+  const readDateTime = new Date(`${log.readDate}T00:00:00`).getTime();
+  const dateTime = Number.isNaN(readDateTime) ? 0 : readDateTime;
 
-  const fallback = new Date(`${log.readDate}T00:00:00`).getTime();
-  return Number.isNaN(fallback) ? 0 : fallback;
+  if (!log.createdAt) return dateTime;
+
+  const createdAt = new Date(log.createdAt);
+  if (Number.isNaN(createdAt.getTime())) return dateTime;
+
+  const tieBreakerMs =
+    createdAt.getUTCHours() * 60 * 60 * 1000 +
+    createdAt.getUTCMinutes() * 60 * 1000 +
+    createdAt.getUTCSeconds() * 1000 +
+    createdAt.getUTCMilliseconds();
+
+  return dateTime + tieBreakerMs;
 }

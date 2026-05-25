@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AuthGate } from "@/components/AuthGate";
 import { AppProvider } from "@/lib/AppContext";
 import "./globals.css";
 
@@ -20,7 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <AppProvider>
-          <div className="min-h-screen">
+          <AuthGate>
+            <div className="min-h-screen">
             <header className="border-b border-ink/10 bg-white/85 backdrop-blur">
               <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -45,7 +47,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </header>
             <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
-          </div>
+            </div>
+          </AuthGate>
         </AppProvider>
       </body>
     </html>

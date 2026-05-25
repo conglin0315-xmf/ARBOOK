@@ -44,13 +44,13 @@ type ReadingLogRow = {
   notes: string | null;
 };
 
-export async function loadSupabaseData(): Promise<AppData> {
+export async function loadSupabaseData(accessToken: string): Promise<AppData> {
   if (!isSupabaseConfigured) return seedData;
 
   const [childrenResult, booksResult, logsResult] = await Promise.all([
-    supabaseRequest<ChildProfileRow[]>("child_profiles?select=*&order=created_at.asc"),
-    supabaseRequest<BookRow[]>("books?select=*&order=title.asc"),
-    supabaseRequest<ReadingLogRow[]>("reading_logs?select=*&order=created_at.asc")
+    supabaseRequest<ChildProfileRow[]>("child_profiles?select=*&order=created_at.asc", { accessToken }),
+    supabaseRequest<BookRow[]>("books?select=*&order=title.asc", { accessToken }),
+    supabaseRequest<ReadingLogRow[]>("reading_logs?select=*&order=created_at.asc", { accessToken })
   ]);
 
   const children = childrenResult.map(fromChildRow);
@@ -58,7 +58,7 @@ export async function loadSupabaseData(): Promise<AppData> {
   const logs = logsResult.map(fromLogRow);
 
   if (children.length === 0 && books.length === 0 && logs.length === 0) {
-    await replaceSupabaseData(seedData);
+    await replaceSupabaseData(seedData, accessToken);
     return seedData;
   }
 
@@ -70,47 +70,56 @@ export async function loadSupabaseData(): Promise<AppData> {
   };
 }
 
-export async function upsertSupabaseChild(child: ChildProfile) {
-  await upsertRows("child_profiles", [toChildRow(child)]);
+export async function claimUnownedSupabaseData(accessToken: string) {
+  if (!isSupabaseConfigured) return;
+  await supabaseRequest("rpc/claim_unowned_reading_tracker_data", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({})
+  });
 }
 
-export async function upsertSupabaseBook(book: Book) {
-  await upsertRows("books", [toBookRow(book)]);
+export async function upsertSupabaseChild(child: ChildProfile, accessToken: string) {
+  await upsertRows("child_profiles", [toChildRow(child)], accessToken);
 }
 
-export async function removeSupabaseBook(bookId: string) {
-  await deleteById("books", bookId);
+export async function upsertSupabaseBook(book: Book, accessToken: string) {
+  await upsertRows("books", [toBookRow(book)], accessToken);
 }
 
-export async function addSupabaseLog(log: ReadingLog) {
-  await insertRows("reading_logs", [toLogRow(log)]);
+export async function removeSupabaseBook(bookId: string, accessToken: string) {
+  await deleteById("books", bookId, accessToken);
 }
 
-export async function upsertSupabaseLog(log: ReadingLog) {
-  await upsertRows("reading_logs", [toLogRow(log)]);
+export async function addSupabaseLog(log: ReadingLog, accessToken: string) {
+  await insertRows("reading_logs", [toLogRow(log)], accessToken);
 }
 
-export async function removeSupabaseLog(logId: string) {
-  await deleteById("reading_logs", logId);
+export async function upsertSupabaseLog(log: ReadingLog, accessToken: string) {
+  await upsertRows("reading_logs", [toLogRow(log)], accessToken);
 }
 
-export async function replaceSupabaseData(data: AppData) {
+export async function removeSupabaseLog(logId: string, accessToken: string) {
+  await deleteById("reading_logs", logId, accessToken);
+}
+
+export async function replaceSupabaseData(data: AppData, accessToken: string) {
   if (!isSupabaseConfigured) return;
 
-  await deleteAllRows("reading_logs");
-  await deleteAllRows("books");
-  await deleteAllRows("child_profiles");
+  await deleteAllRows("reading_logs", accessToken);
+  await deleteAllRows("books", accessToken);
+  await deleteAllRows("child_profiles", accessToken);
 
   if (data.children.length) {
-    await insertRows("child_profiles", data.children.map(toChildRow));
+    await insertRows("child_profiles", data.children.map(toChildRow), accessToken);
   }
 
   if (data.books.length) {
-    await insertRows("books", data.books.map(toBookRow));
+    await insertRows("books", data.books.map(toBookRow), accessToken);
   }
 
   if (data.logs.length) {
-    await insertRows("reading_logs", data.logs.map(toLogRow));
+    await insertRows("reading_logs", data.logs.map(toLogRow), accessToken);
   }
 }
 
@@ -206,34 +215,38 @@ function fromLogRow(row: ReadingLogRow): ReadingLog {
   };
 }
 
-async function insertRows(table: string, rows: unknown[]) {
+async function insertRows(table: string, rows: unknown[], accessToken: string) {
   if (!isSupabaseConfigured || rows.length === 0) return;
   await supabaseRequest(table, {
     method: "POST",
+    accessToken,
     headers: { Prefer: "return=minimal" },
     body: JSON.stringify(rows)
   });
 }
 
-async function upsertRows(table: string, rows: unknown[]) {
+async function upsertRows(table: string, rows: unknown[], accessToken: string) {
   if (!isSupabaseConfigured || rows.length === 0) return;
   await supabaseRequest(`${table}?on_conflict=id`, {
     method: "POST",
+    accessToken,
     headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify(rows)
   });
 }
 
-async function deleteById(table: string, id: string) {
+async function deleteById(table: string, id: string, accessToken: string) {
   if (!isSupabaseConfigured) return;
   await supabaseRequest(`${table}?id=eq.${encodeURIComponent(id)}`, {
-    method: "DELETE"
+    method: "DELETE",
+    accessToken
   });
 }
 
-async function deleteAllRows(table: string) {
+async function deleteAllRows(table: string, accessToken: string) {
   if (!isSupabaseConfigured) return;
   await supabaseRequest(`${table}?id=neq.${encodeURIComponent("")}`, {
-    method: "DELETE"
+    method: "DELETE",
+    accessToken
   });
 }

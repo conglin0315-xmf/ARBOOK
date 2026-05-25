@@ -1,11 +1,23 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  clearStoredSession,
+  getAuthUser,
+  loadStoredSession,
+  refreshAuthSession,
+  saveStoredSession,
+  signInWithPassword,
+  signOutSession,
+  signUpWithPassword,
+  type AuthSession
+} from "./auth";
 import { loadData, saveData } from "./storage";
 import { seedData } from "./seed";
 import { isSupabaseConfigured } from "./supabase";
 import {
   addSupabaseLog,
+  claimUnownedSupabaseData,
   loadSupabaseData,
   removeSupabaseBook,
   removeSupabaseLog,
@@ -29,24 +41,52 @@ type AppContextValue = {
   upsertLog: (log: ReadingLog) => void;
   replaceData: (data: AppData) => void;
   isCloudSyncEnabled: boolean;
+  isAuthReady: boolean;
+  isAuthenticated: boolean;
+  authUserEmail?: string;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<string | undefined>;
+  signOut: () => Promise<void>;
 };
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
+const emptyData: AppData = { children: [], books: [], logs: [] };
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<AppData>(seedData);
+  const [data, setData] = useState<AppData>(isSupabaseConfigured ? emptyData : seedData);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [session, setSession] = useState<AuthSession | undefined>();
 
   useEffect(() => {
     let isMounted = true;
 
     async function hydrateData() {
       try {
-        const nextData = isSupabaseConfigured ? await loadSupabaseData() : loadData();
+        if (!isSupabaseConfigured) {
+          if (isMounted) setData(loadData());
+          return;
+        }
+
+        const restoredSession = await restoreSession();
+        if (!isMounted) return;
+
+        if (!restoredSession) {
+          setSession(undefined);
+          setData(emptyData);
+          return;
+        }
+
+        setSession(restoredSession);
+        await claimUnownedSupabaseData(restoredSession.accessToken);
+        const nextData = await loadSupabaseData(restoredSession.accessToken);
         if (isMounted) setData(nextData);
       } catch (error) {
-        console.error("Could not load Supabase data. Falling back to localStorage.", error);
-        if (isMounted) setData(loadData());
+        console.error("Could not load app data.", error);
+        clearStoredSession();
+        if (isMounted) {
+          setSession(undefined);
+          setData(isSupabaseConfigured ? emptyData : loadData());
+        }
       } finally {
         if (isMounted) setHasLoaded(true);
       }
@@ -73,8 +113,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       selectedChildId,
       setSelectedChildId: (childId) => setData((current) => ({ ...current, selectedChildId: childId })),
       upsertChild: (child) => {
-        if (isSupabaseConfigured) {
-          void upsertSupabaseChild(child).catch((error) => console.error("Could not save child profile.", error));
+        if (isSupabaseConfigured && session) {
+          void upsertSupabaseChild(child, session.accessToken).catch((error) => console.error("Could not save child profile.", error));
         }
         setData((current) => {
           const exists = current.children.some((item) => item.id === child.id);
@@ -88,8 +128,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
       },
       upsertBook: (book) => {
-        if (isSupabaseConfigured) {
-          void upsertSupabaseBook(book).catch((error) => console.error("Could not save book.", error));
+        if (isSupabaseConfigured && session) {
+          void upsertSupabaseBook(book, session.accessToken).catch((error) => console.error("Could not save book.", error));
         }
         setData((current) => {
           const exists = current.books.some((item) => item.id === book.id);
@@ -102,8 +142,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
       },
       removeBook: (bookId) => {
-        if (isSupabaseConfigured) {
-          void removeSupabaseBook(bookId).catch((error) => console.error("Could not remove book.", error));
+        if (isSupabaseConfigured && session) {
+          void removeSupabaseBook(bookId, session.accessToken).catch((error) => console.error("Could not remove book.", error));
         }
         setData((current) => {
           return {
@@ -114,16 +154,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
       },
       addLog: (log) => {
-        if (isSupabaseConfigured) {
-          void addSupabaseLog(log).catch((error) => console.error("Could not save reading log.", error));
+        if (isSupabaseConfigured && session) {
+          void addSupabaseLog(log, session.accessToken).catch((error) => console.error("Could not save reading log.", error));
         }
         setData((current) => {
           return { ...current, logs: [...current.logs, log] };
         });
       },
       removeLog: (logId) => {
-        if (isSupabaseConfigured) {
-          void removeSupabaseLog(logId).catch((error) => console.error("Could not remove reading log.", error));
+        if (isSupabaseConfigured && session) {
+          void removeSupabaseLog(logId, session.accessToken).catch((error) => console.error("Could not remove reading log.", error));
         }
         setData((current) => {
           return {
@@ -133,8 +173,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
       },
       upsertLog: (log) => {
-        if (isSupabaseConfigured) {
-          void upsertSupabaseLog(log).catch((error) => console.error("Could not update reading log.", error));
+        if (isSupabaseConfigured && session) {
+          void upsertSupabaseLog(log, session.accessToken).catch((error) => console.error("Could not update reading log.", error));
         }
         setData((current) => {
           return {
@@ -144,17 +184,62 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
       },
       replaceData: (nextData) => {
-        if (isSupabaseConfigured) {
-          void replaceSupabaseData(nextData).catch((error) => console.error("Could not replace Supabase data.", error));
+        if (isSupabaseConfigured && session) {
+          void replaceSupabaseData(nextData, session.accessToken).catch((error) => console.error("Could not replace Supabase data.", error));
         }
         setData(nextData);
       },
-      isCloudSyncEnabled: isSupabaseConfigured
+      isCloudSyncEnabled: isSupabaseConfigured,
+      isAuthReady: hasLoaded,
+      isAuthenticated: !isSupabaseConfigured || Boolean(session),
+      authUserEmail: session?.user.email,
+      signIn: async (email, password) => {
+        const nextSession = await signInWithPassword(email, password);
+        if (!nextSession) throw new Error("Could not sign in. Please check your email confirmation and password.");
+        saveStoredSession(nextSession);
+        setSession(nextSession);
+        await claimUnownedSupabaseData(nextSession.accessToken);
+        setData(await loadSupabaseData(nextSession.accessToken));
+      },
+      signUp: async (email, password) => {
+        const nextSession = await signUpWithPassword(email, password);
+        if (!nextSession) return "Account created. Check your email to confirm it, then sign in.";
+        saveStoredSession(nextSession);
+        setSession(nextSession);
+        await claimUnownedSupabaseData(nextSession.accessToken);
+        setData(await loadSupabaseData(nextSession.accessToken));
+        return undefined;
+      },
+      signOut: async () => {
+        if (session) {
+          await signOutSession(session.accessToken).catch(() => undefined);
+        }
+        clearStoredSession();
+        setSession(undefined);
+        setData(isSupabaseConfigured ? emptyData : loadData());
+      }
     }),
-    [data, selectedChild, selectedChildId]
+    [data, hasLoaded, selectedChild, selectedChildId, session]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+}
+
+async function restoreSession() {
+  const storedSession = loadStoredSession();
+  if (!storedSession) return undefined;
+
+  const needsRefresh = Date.now() > storedSession.expiresAt - 60_000;
+  const nextSession = needsRefresh ? await refreshAuthSession(storedSession) : storedSession;
+  if (!nextSession) return undefined;
+
+  const user = await getAuthUser(nextSession.accessToken);
+  const verifiedSession = {
+    ...nextSession,
+    user
+  };
+  saveStoredSession(verifiedSession);
+  return verifiedSession;
 }
 
 export function useAppData() {

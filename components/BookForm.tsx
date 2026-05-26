@@ -24,6 +24,7 @@ type BookSuggestion = {
 export function BookForm({ onSave, existingBooks = [] }: BookFormProps) {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
+  const [shelf, setShelf] = useState<"wishlist" | "reading">("wishlist");
   const [series, setSeries] = useState("");
   const [arLevel, setArLevel] = useState("");
   const [interestLevel, setInterestLevel] = useState("LG");
@@ -140,6 +141,7 @@ export function BookForm({ onSave, existingBooks = [] }: BookFormProps) {
       id: makeId("book"),
       title: title.trim(),
       author: author.trim(),
+      shelf,
       series: series.trim() || undefined,
       arLevel: arLevel ? Number(arLevel) : undefined,
       interestLevel: interestLevel.trim() || undefined,
@@ -150,6 +152,7 @@ export function BookForm({ onSave, existingBooks = [] }: BookFormProps) {
 
     setTitle("");
     setAuthor("");
+    setShelf("wishlist");
     setSeries("");
     setArLevel("");
     setInterestLevel("LG");
@@ -216,6 +219,23 @@ export function BookForm({ onSave, existingBooks = [] }: BookFormProps) {
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <fieldset className="sm:col-span-2">
+          <legend className="text-sm font-semibold text-ink/70">Where should this book go?</legend>
+          <div className="mt-2 grid gap-2 rounded-lg border border-ink/15 bg-cream p-1 sm:grid-cols-2">
+            <ShelfChoice
+              title="Add to Wish List"
+              helper="Need to borrow or buy later."
+              active={shelf === "wishlist"}
+              onClick={() => setShelf("wishlist")}
+            />
+            <ShelfChoice
+              title="Add to Current Shelf"
+              helper="Already available to read now."
+              active={shelf === "reading"}
+              onClick={() => setShelf("reading")}
+            />
+          </div>
+        </fieldset>
         <label className="relative block">
           <span className="text-sm font-semibold text-ink/70">Title</span>
           <input
@@ -343,6 +363,32 @@ function SuggestionButton({
           Saved AR {localMatch.arLevel.toFixed(1)}
         </span>
       ) : null}
+    </button>
+  );
+}
+
+function ShelfChoice({
+  title,
+  helper,
+  active,
+  onClick
+}: {
+  title: string;
+  helper: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={`rounded-md px-3 py-2 text-left transition ${
+        active ? "bg-white text-ink shadow-sm" : "text-ink/65 hover:text-ink"
+      }`}
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+    >
+      <span className="block text-sm font-bold">{title}</span>
+      <span className="mt-0.5 block text-xs">{helper}</span>
     </button>
   );
 }

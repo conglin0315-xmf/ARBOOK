@@ -112,13 +112,13 @@ export default function RecommendationsPage() {
 
       <RecommendationSection
         title="Comfort Reads"
-        helper="Start here. These are verified Wish List books or local catalog entries whose listed BL range overlaps the current reading range."
+        helper="Start here. These are not-yet-saved local catalog books whose listed BL range overlaps the current reading range."
         items={recommendations.comfortReads}
         onAddToWishList={addRecommendationToWishList}
       />
       <RecommendationSection
         title="Next Level Reads"
-        helper="Try these when today's books feel easy. These use verified Wish List books or local catalog entries 0.1-0.3 above the current max."
+        helper="Try these when today's books feel easy. These are not-yet-saved local catalog books around 0.1-0.3 above the current max."
         items={recommendations.nextStepBooks}
         onAddToWishList={addRecommendationToWishList}
       />
@@ -140,7 +140,6 @@ export default function RecommendationsPage() {
         addedKeys={addedDiscoveryKeys}
         onAdd={addDiscovery}
       />
-      <RecommendationSection title="Repeat Favorites" items={recommendations.repeatFavorites} />
 
       <section>
         <div className="mb-3">
@@ -310,7 +309,7 @@ function RecommendationSection({
       ) : (
         <p className="mt-3 rounded-lg border border-ink/10 bg-white p-4 text-sm text-ink/60">
           {helper
-            ? "No matches yet. Add Wish List books with verified AR/ATOS values to improve recommendations."
+            ? "No not-yet-saved local catalog matches yet. Add a book manually below if you already know what you want."
             : "No matches yet. Add more reading sessions to improve recommendations."}
         </p>
       )}

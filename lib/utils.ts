@@ -142,107 +142,45 @@ export function calculateChildStats(data: AppData, childId: string) {
 }
 
 export function recommendBooks(data: AppData, child: ChildProfile) {
-  const readCounts = getReadCountByBook(data.logs, child.id);
   const range = getRecommendedRange(child, data.logs, data.books);
   const profileThemes = new Set(child.favoriteThemes.map((theme) => theme.toLowerCase()));
   const profileSeries = new Set(child.favoriteSeries.map((series) => series.toLowerCase()));
-  const wishlistBooksWithAr = data.books.filter(
-    (book) => book.shelf === "wishlist" && typeof book.arLevel === "number" && (readCounts[book.id] ?? 0) === 0
-  );
   const savedBookKeys = new Set(data.books.map((book) => getBookKey(book.title, book.author)));
 
-  const scoreBook = (book: Book, kind: "comfort" | "next_step", allowNearest = false): BookRecommendation | undefined => {
-    if (typeof book.arLevel !== "number") return undefined;
-    if (book.shelf !== "wishlist") return undefined;
-    const readCount = readCounts[book.id] ?? 0;
-    if (readCount > 0) return undefined;
-
-    const target = kind === "comfort" ? range.comfort : range.nextStep;
-    const distance = distanceFromRange(book.arLevel, target.min, target.max);
-    const isInRange = book.arLevel >= target.min && book.arLevel <= target.max;
-    if (!isInRange && !allowNearest) return undefined;
-
-    const matchedThemes = book.themes.filter((theme) => profileThemes.has(theme.toLowerCase()));
-    const seriesMatch = book.series ? profileSeries.has(book.series.toLowerCase()) : false;
-    let score = 10;
-    score -= distance * 3;
-    score += matchedThemes.length * 4;
-    score += seriesMatch ? 6 : 0;
-
-    const reasonBits = [
-      seriesMatch ? `liked ${book.series}` : undefined,
-      matchedThemes.length ? `liked ${matchedThemes.join(" and ")} books` : undefined,
-      "this is from the wish list with a verified AR/ATOS value",
-      isInRange
-        ? kind === "next_step"
-          ? "this is a gentle next step"
-          : "this sits in the current reading range"
-        : `this is the closest unread match near AR ${target.min.toFixed(1)}-${target.max.toFixed(1)}`
-    ].filter(Boolean);
-
-    return {
-      book,
-      kind,
-      score,
-      reason: `Recommended because ${child.name} ${reasonBits.join(" and ")}.`
-    };
-  };
-
-  const recommendations = data.books
-    .flatMap((book) => [scoreBook(book, "comfort"), scoreBook(book, "next_step")])
-    .filter((rec): rec is BookRecommendation => Boolean(rec))
-    .sort((a, b) => b.score - a.score);
-  const localCatalogRecommendations = localArCatalog
-    .filter((book) => !savedBookKeys.has(getBookKey(book.title, book.author)))
+  const unsavedCatalogBooks = localArCatalog
+    .filter((book) => !savedBookKeys.has(getBookKey(book.title, book.author)));
+  const localCatalogRecommendations = unsavedCatalogBooks
     .flatMap((book) => [scoreLocalCatalogBook(book, "comfort"), scoreLocalCatalogBook(book, "next_step")])
     .filter((rec): rec is BookRecommendation => Boolean(rec));
-  const combinedRecommendations = [...recommendations, ...localCatalogRecommendations].sort((a, b) => b.score - a.score);
-  const comfortReads = combinedRecommendations.filter((rec) => rec.kind === "comfort");
-  const nextStepBooks = combinedRecommendations.filter((rec) => rec.kind === "next_step");
+  const sortedRecommendations = localCatalogRecommendations.sort((a, b) => b.score - a.score);
+  const comfortReads = sortedRecommendations.filter((rec) => rec.kind === "comfort");
+  const nextStepBooks = sortedRecommendations.filter((rec) => rec.kind === "next_step");
   const fallbackComfortReads = comfortReads.length
     ? []
-    : wishlistBooksWithAr
-        .filter((book) => !nextStepBooks.some((rec) => rec.book.id === book.id))
-        .filter((book) => distanceFromRange(book.arLevel as number, range.comfort.min, range.comfort.max) <= 0.3)
-        .map((book) => scoreBook(book, "comfort", true))
+    : unsavedCatalogBooks
+        .map((book) => scoreLocalCatalogBook(book, "comfort", true))
         .filter((rec): rec is BookRecommendation => Boolean(rec))
         .sort((a, b) => b.score - a.score)
-        .slice(0, 3);
+        .slice(0, 6);
   const fallbackNextStepBooks = nextStepBooks.length
     ? []
-    : wishlistBooksWithAr
+    : unsavedCatalogBooks
         .filter((book) => !fallbackComfortReads.some((rec) => rec.book.id === book.id))
-        .map((book) => scoreBook(book, "next_step", true))
+        .map((book) => scoreLocalCatalogBook(book, "next_step", true))
         .filter((rec): rec is BookRecommendation => Boolean(rec))
         .sort((a, b) => b.score - a.score)
-        .slice(0, 3);
-
-  const repeatFavorites = data.books
-    .filter((book) => (readCounts[book.id] ?? 0) > 0)
-    .map((book): BookRecommendation => {
-      const bookLogs = data.logs.filter((log) => log.childId === child.id && log.bookId === book.id);
-      const avgLiked = bookLogs.reduce((sum, log) => sum + log.likedScore, 0) / bookLogs.length;
-      return {
-        book,
-        kind: "repeat",
-        score: avgLiked + (readCounts[book.id] ?? 0),
-        reason: `${child.name} has read this ${readCounts[book.id]} time${readCounts[book.id] === 1 ? "" : "s"} and rated it highly.`
-      };
-    })
-    .filter((rec) => rec.score >= 5)
-    .sort((a, b) => b.score - a.score);
+        .slice(0, 6);
 
   return {
     range,
     comfortReads: comfortReads.length ? comfortReads : fallbackComfortReads,
-    nextStepBooks: nextStepBooks.length ? nextStepBooks : fallbackNextStepBooks,
-    repeatFavorites
+    nextStepBooks: nextStepBooks.length ? nextStepBooks : fallbackNextStepBooks
   };
 
-  function scoreLocalCatalogBook(book: LocalCatalogBook, kind: "comfort" | "next_step"): BookRecommendation | undefined {
+  function scoreLocalCatalogBook(book: LocalCatalogBook, kind: "comfort" | "next_step", allowNearest = false): BookRecommendation | undefined {
     const target = kind === "comfort" ? range.comfort : range.nextStep;
     const overlapsRange = book.arRangeMin <= target.max && book.arRangeMax >= target.min;
-    if (!overlapsRange) return undefined;
+    if (!overlapsRange && !allowNearest) return undefined;
 
     const matchedThemes = book.themes.filter((theme) => profileThemes.has(theme.toLowerCase()));
     const seriesMatch = book.series ? profileSeries.has(book.series.toLowerCase()) : false;
@@ -261,18 +199,13 @@ export function recommendBooks(data: AppData, child: ChildProfile) {
         book.arRangeMin === book.arRangeMax
           ? `AR ${book.arRangeMin.toFixed(1)}`
           : `BL ${book.arRangeMin.toFixed(1)}-${book.arRangeMax.toFixed(1)}`,
-      reason: `Recommended because this local catalog book overlaps the ${kind === "comfort" ? "comfort" : "next step"} range and ${child.name} likes ${matchedThemes.length ? matchedThemes.join(" and ") : "similar early-reader"} books. ${book.arRangeMin === book.arRangeMax ? "This imported AR value should still be verified before logging it." : "Verify the exact AR/ATOS before logging it."}`
+      reason: `Recommended because this not-yet-saved local catalog book ${overlapsRange ? "overlaps" : "is near"} the ${kind === "comfort" ? "comfort" : "next level"} range and ${child.name} likes ${matchedThemes.length ? matchedThemes.join(" and ") : "similar early-reader"} books. ${book.arRangeMin === book.arRangeMax ? "This imported AR value should still be verified before logging it." : "Verify the exact AR/ATOS before logging it."}`
     };
   }
 }
 
 function roundOne(value: number) {
   return Math.round(value * 10) / 10;
-}
-
-function distanceFromRange(value: number, min: number, max: number) {
-  if (value >= min && value <= max) return 0;
-  return value < min ? min - value : value - max;
 }
 
 function distanceBetweenRanges(aMin: number, aMax: number, bMin: number, bMax: number) {

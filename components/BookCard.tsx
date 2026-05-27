@@ -13,6 +13,7 @@ type BookCardProps = {
   onUpdateSeries?: (book: Book, series: string | undefined) => void;
   onMoveToArchive?: (book: Book) => void;
   onMoveToReading?: (book: Book) => void;
+  showKclsAvailabilityLink?: boolean;
   suggestedSeries?: string;
   onRemove?: (book: Book) => void;
 };
@@ -27,6 +28,7 @@ export function BookCard({
   onUpdateSeries,
   onMoveToArchive,
   onMoveToReading,
+  showKclsAvailabilityLink,
   suggestedSeries,
   onRemove
 }: BookCardProps) {
@@ -178,6 +180,23 @@ export function BookCard({
           </button>
         ) : null}
 
+        {showKclsAvailabilityLink ? (
+          <div className="rounded-lg border border-ink/10 bg-cream p-3">
+            <p className="text-xs font-semibold text-ink/60">King County Library System</p>
+            <a
+              className="mt-1 inline-flex text-sm font-bold text-leaf underline-offset-2 hover:underline"
+              href={buildKclsSearchUrl(book.title, book.author)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Check KCLS availability
+            </a>
+            <p className="mt-1 text-xs text-ink/55">
+              Opens the live KCLS catalog search so you can confirm copies, format, and hold status.
+            </p>
+          </div>
+        ) : null}
+
         {onMoveToArchive ? (
           <button
             className="rounded-lg border border-ink/15 px-4 py-2 text-sm font-semibold text-ink/65 transition hover:bg-cream hover:text-ink"
@@ -221,4 +240,9 @@ function buildArSearchUrl(title: string, author: string) {
     .filter((part) => part.trim())
     .join(" ");
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+function buildKclsSearchUrl(title: string, author: string) {
+  const query = [title, author].filter((part) => part.trim()).join(" ");
+  return `https://kcls.bibliocommons.com/v2/search?query=${encodeURIComponent(query)}&searchType=smart`;
 }

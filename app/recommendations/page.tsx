@@ -154,13 +154,14 @@ export default function RecommendationsPage() {
 
       <BookSelectionSection
         title="Wish List"
-        helper="Books to consider buying or borrowing next. Verify AR/ATOS here so they can feed Comfort Reads and Next Level Reads."
+        helper="Books to consider buying or borrowing next. Use the KCLS link on each card to check live library availability, copies, and holds."
         books={wishListBooks}
         allBooks={data.books}
         readCounts={readCounts}
         onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
         onUpdateArLevel={(book, arLevel) => upsertBook({ ...book, arLevel })}
         onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
+        showKclsAvailabilityLinks
         onRemove={(book) => removeBook(book.id)}
       />
 
@@ -197,6 +198,7 @@ function BookSelectionSection({
   onUpdateArLevel,
   onMoveToArchive,
   onMoveToReading,
+  showKclsAvailabilityLinks,
   onRemove
 }: {
   title: string;
@@ -208,6 +210,7 @@ function BookSelectionSection({
   onUpdateArLevel?: (book: Book, arLevel: number | undefined) => void;
   onMoveToArchive?: (book: Book) => void;
   onMoveToReading?: (book: Book) => void;
+  showKclsAvailabilityLinks?: boolean;
   onRemove?: (book: Book) => void;
 }) {
   return (
@@ -230,6 +233,7 @@ function BookSelectionSection({
               onUpdateArLevel={onUpdateArLevel}
               onMoveToArchive={onMoveToArchive}
               onMoveToReading={onMoveToReading}
+              showKclsAvailabilityLink={showKclsAvailabilityLinks}
               suggestedSeries={inferSeriesForBook(book, allBooks)}
               onRemove={onRemove}
             />

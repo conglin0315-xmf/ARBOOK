@@ -11,6 +11,17 @@ npm run dev
 
 Then open `http://localhost:3000`.
 
+## Install on iPhone
+
+After the app is deployed, open the Vercel URL in Safari on your iPhone.
+
+1. Tap the Share button.
+2. Tap **Add to Home Screen**.
+3. Keep the name **AR Reading**, or rename it.
+4. Tap **Add**.
+
+The app will appear on the iPhone Home Screen and open in a standalone app-style window.
+
 ## Product Overview
 
 Parents can:
@@ -19,7 +30,7 @@ Parents can:
 - Add books manually, including an optional AR Level / ATOS Level.
 - Log reading sessions, including rereads of the same book.
 - See dashboard stats like total books, reading sessions, average AR level, most-read book, favorite series, and current reading range.
-- Get simple rules-based recommendations grouped as Comfort Reads, Next Step Books, and Repeat Favorites.
+- Get simple rules-based recommendations grouped as Comfort Reads and Next Level Reads.
 - Export and import all local data as JSON.
 
 Important: this MVP does not scrape AR Bookfinder or any proprietary Accelerated Reader database. AR/ATOS level is entered by the parent and should be verified with your school or official book lookup tools.
@@ -81,10 +92,9 @@ The recommendation engine:
 - Uses the child's recent average AR level from the last 10 sessions.
 - Falls back to the profile comfort range if no history exists.
 - Creates a Comfort Reads range at recent average minus/plus 0.2.
-- Creates a Next Step Books range at recent average +0.1 to +0.4.
+- Creates a Next Level Reads range at recent average +0.1 to +0.4.
 - Boosts books matching favorite themes or favorite series.
-- Penalizes books already read more than 3 times for new recommendations.
-- Shows already-read favorites separately as Repeat Favorites.
+- Hides books already saved in the app from the recommendation sections.
 - Lowers the range by 0.2 if 3+ of the last 5 logs were too hard.
 - Raises the range by 0.2 if 3+ of the last 5 logs were too easy.
 

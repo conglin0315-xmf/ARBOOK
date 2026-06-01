@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { AuthGate } from "@/components/AuthGate";
 import { AppProvider } from "@/lib/AppContext";
@@ -6,7 +6,26 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Children's AR Reading Tracker",
-  description: "Track children's reading history and simple AR/ATOS recommendations."
+  description: "Track children's reading history and simple AR/ATOS recommendations.",
+  manifest: "/manifest.webmanifest",
+  applicationName: "AR Reading Tracker",
+  appleWebApp: {
+    capable: true,
+    title: "AR Reading",
+    statusBarStyle: "default"
+  },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" }
+    ],
+    apple: [
+      { url: "/apple-touch-icon.svg", type: "image/svg+xml" }
+    ]
+  }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f6efe4"
 };
 
 const navItems = [

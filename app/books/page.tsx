@@ -5,7 +5,7 @@ import { BookCard } from "@/components/BookCard";
 import { ChildSelector } from "@/components/ChildSelector";
 import { ReadingLogForm } from "@/components/ReadingLogForm";
 import { useAppData } from "@/lib/AppContext";
-import { getReadCountByBook, makeId } from "@/lib/utils";
+import { getPacificDateInputValue, getReadCountByBook, makeId } from "@/lib/utils";
 import type { Book, ReadingLog } from "@/lib/types";
 
 type ReadStatus = "all" | "read" | "unread";
@@ -71,7 +71,7 @@ export default function BooksPage() {
       childId: selectedChild.id,
       bookId: book.id,
       createdAt: new Date().toISOString(),
-      readDate: new Date().toISOString().slice(0, 10),
+      readDate: getPacificDateInputValue(),
       readingMode: "parent_assisted",
       likedScore: 4,
       difficulty: "just_right",

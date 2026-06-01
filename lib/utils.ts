@@ -22,6 +22,21 @@ export function formatTags(tags: string[]) {
   return tags.join(", ");
 }
 
+export function getPacificDateInputValue(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  if (!year || !month || !day) return date.toLocaleDateString("en-CA");
+  return `${year}-${month}-${day}`;
+}
+
 export function getReadCountByBook(logs: ReadingLog[], childId?: string) {
   return logs.reduce<Record<string, number>>((acc, log) => {
     if (childId && log.childId !== childId) return acc;
@@ -259,7 +274,7 @@ function getLatestLogDate(logs: ReadingLog[]) {
 }
 
 function formatDateOnly(date: Date) {
-  return date.toISOString().slice(0, 10);
+  return getPacificDateInputValue(date);
 }
 
 function getPercentComparison(current: number, prior: number) {

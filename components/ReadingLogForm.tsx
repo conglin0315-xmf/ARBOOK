@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { makeId } from "@/lib/utils";
+import { getPacificDateInputValue, makeId } from "@/lib/utils";
 import type { Book, ReadingLog } from "@/lib/types";
 
 type ReadingLogFormProps = {
@@ -13,7 +13,7 @@ type ReadingLogFormProps = {
 
 export function ReadingLogForm({ childId, books, initialBookId, onSave }: ReadingLogFormProps) {
   const [bookId, setBookId] = useState(initialBookId ?? books[0]?.id ?? "");
-  const [readDate, setReadDate] = useState(new Date().toISOString().slice(0, 10));
+  const [readDate, setReadDate] = useState(getPacificDateInputValue());
   const [readingMode, setReadingMode] = useState<ReadingLog["readingMode"]>("read_aloud");
   const [likedScore, setLikedScore] = useState<ReadingLog["likedScore"]>(5);
   const [difficulty, setDifficulty] = useState<ReadingLog["difficulty"]>("just_right");
@@ -39,7 +39,7 @@ export function ReadingLogForm({ childId, books, initialBookId, onSave }: Readin
       notes: notes.trim() || undefined
     });
 
-    setReadDate(new Date().toISOString().slice(0, 10));
+    setReadDate(getPacificDateInputValue());
     setReadingMode("read_aloud");
     setLikedScore(5);
     setDifficulty("just_right");

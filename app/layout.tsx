@@ -45,8 +45,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <header className="border-b border-ink/10 bg-white/85 backdrop-blur">
               <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                  <Link href="/" className="text-xl font-bold text-ink">
-                    Children's AR Reading Tracker
+                  <Link href="/" className="group flex items-center gap-3 text-ink" aria-label="AR Reading home">
+                    <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-ink shadow-soft transition group-hover:-translate-y-0.5">
+                      <span className="absolute inset-0 bg-[radial-gradient(circle_at_26%_24%,#f7d99b_0_18%,transparent_19%),radial-gradient(circle_at_78%_26%,#b75a73_0_16%,transparent_17%),linear-gradient(135deg,#26323f_0%,#3d5362_100%)]" />
+                      <svg className="relative h-7 w-7" viewBox="0 0 32 32" aria-hidden="true">
+                        <path
+                          d="M7 9.5c0-1.7 1.3-3 3-3h4.3c2.1 0 4 .9 5.2 2.4 1.2-1.5 3.1-2.4 5.2-2.4H26c1.7 0 3 1.3 3 3v16c0 1.1-.9 2-2 2h-4.4c-2.8 0-5.5.9-7.6 2.6-2.1-1.7-4.8-2.6-7.6-2.6H5c-1.1 0-2-.9-2-2v-16Z"
+                          fill="#fff8ef"
+                        />
+                        <path d="M16 9v18M7.5 12.5h6M7.5 16h5.2M20.5 12.5h4M20.5 16h4" stroke="#26323f" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                    <span>
+                      <span className="block text-xl font-black leading-tight tracking-normal text-ink">AR Reading</span>
+                      <span className="block text-xs font-semibold uppercase tracking-normal text-leaf">Family book tracker</span>
+                    </span>
                   </Link>
                   <p className="max-w-xl text-sm text-ink/65">
                     AR/ATOS level is entered by the parent. Please verify with your school or official book lookup tools.

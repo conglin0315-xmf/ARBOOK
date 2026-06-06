@@ -1,18 +1,66 @@
 "use client";
 
+import { useState } from "react";
 import { ChildSelector } from "@/components/ChildSelector";
 import { StatCard } from "@/components/StatCard";
 import { useAppData } from "@/lib/AppContext";
 import { calculateChildStats, getRecommendedRange } from "@/lib/utils";
 
+type SummaryPeriod = "weekly" | "thirtyDay" | "total";
+
 export default function DashboardPage() {
   const { data, selectedChild } = useAppData();
+  const [summaryPeriod, setSummaryPeriod] = useState<SummaryPeriod>("weekly");
 
   if (!selectedChild) return <EmptyState />;
 
   const stats = calculateChildStats(data, selectedChild.id);
   const range = getRecommendedRange(selectedChild, data.logs, data.books);
   const bookById = new Map(data.books.map((book) => [book.id, book]));
+  const summary = {
+    weekly: {
+      title: "Weekly summary",
+      range: `Monday ${stats.weeklyRangeStart} through Sunday ${stats.weeklyRangeEnd}.`,
+      booksRead: stats.weeklyBooksRead,
+      booksHelper: "Unique books this week.",
+      sessions: stats.weeklyReadingSessions,
+      sessionsHelper: "Each reread counts.",
+      averageArLevel: stats.weeklyAverageArLevel,
+      comparisons: {
+        booksRead: stats.weeklyComparisons.booksRead,
+        sessions: stats.weeklyComparisons.readingSessions,
+        averageArLevel: stats.weeklyComparisons.averageArLevel
+      }
+    },
+    thirtyDay: {
+      title: "Past 30 days",
+      range: `Through ${stats.thirtyDayRangeEnd}.`,
+      booksRead: stats.thirtyDayBooksRead,
+      booksHelper: "Unique books in the last 30 days.",
+      sessions: stats.thirtyDayReadingSessions,
+      sessionsHelper: `Avg ${stats.thirtyDayAverageWeeklySessions.toFixed(1)} sessions per week.`,
+      averageArLevel: stats.thirtyDayAverageArLevel,
+      comparisons: {
+        booksRead: stats.thirtyDayComparisons.booksRead,
+        sessions: stats.thirtyDayComparisons.readingSessions,
+        averageArLevel: stats.thirtyDayComparisons.averageArLevel
+      }
+    },
+    total: {
+      title: "Total summary",
+      range: "All reading history.",
+      booksRead: stats.totalBooksRead,
+      booksHelper: "Unique books with at least one session.",
+      sessions: stats.totalReadingSessions,
+      sessionsHelper: "Each reread counts.",
+      averageArLevel: stats.averageArLevel,
+      comparisons: {
+        booksRead: undefined,
+        sessions: undefined,
+        averageArLevel: undefined
+      }
+    }
+  }[summaryPeriod];
 
   return (
     <div className="space-y-6">
@@ -29,63 +77,43 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total books read" value={stats.totalBooksRead} />
-        <StatCard label="Reading sessions" value={stats.totalReadingSessions} helper="Each reread counts." />
-        <StatCard label="Average AR level" value={stats.averageArLevel?.toFixed(1) ?? "None yet"} />
-        <StatCard label="Reading Range" value={`${range.comfort.min.toFixed(1)}-${range.nextStep.max.toFixed(1)}`} helper="Comfort through next step." />
-      </section>
-
       <section>
-        <div className="mb-3 flex items-center justify-between gap-4">
-          <h2 className="text-lg font-bold text-ink">Weekly summary</h2>
-          <p className="text-sm text-ink/60">Monday {stats.weeklyRangeStart} through Sunday {stats.weeklyRangeEnd}.</p>
+        <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <h2 className="text-lg font-bold text-ink">{summary.title}</h2>
+            <p className="mt-1 text-sm text-ink/60">{summary.range}</p>
+          </div>
+          <label className="block sm:w-56">
+            <span className="text-sm font-semibold text-ink/70">Summary period</span>
+            <select
+              className="focus-ring mt-1 w-full rounded-lg border border-ink/15 bg-white px-3 py-2 text-sm"
+              value={summaryPeriod}
+              onChange={(event) => setSummaryPeriod(event.target.value as SummaryPeriod)}
+            >
+              <option value="weekly">Weekly</option>
+              <option value="thirtyDay">Past 30 days</option>
+              <option value="total">Total</option>
+            </select>
+          </label>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard
             label="Books read"
-            value={stats.weeklyBooksRead}
-            helper="Unique books this week."
-            comparison={stats.weeklyComparisons.booksRead}
+            value={summary.booksRead}
+            helper={summary.booksHelper}
+            comparison={summary.comparisons.booksRead}
           />
           <StatCard
             label="Reading sessions"
-            value={stats.weeklyReadingSessions}
-            helper="Each reread counts."
-            comparison={stats.weeklyComparisons.readingSessions}
+            value={summary.sessions}
+            helper={summary.sessionsHelper}
+            comparison={summary.comparisons.sessions}
           />
           <StatCard
             label="Avg AR level"
-            value={stats.weeklyAverageArLevel?.toFixed(1) ?? "None yet"}
+            value={summary.averageArLevel?.toFixed(1) ?? "None yet"}
             helper="Based on sessions with AR levels."
-            comparison={stats.weeklyComparisons.averageArLevel}
-          />
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between gap-4">
-          <h2 className="text-lg font-bold text-ink">Past 30 days</h2>
-          <p className="text-sm text-ink/60">Through {stats.thirtyDayRangeEnd}.</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            label="Books read"
-            value={stats.thirtyDayBooksRead}
-            helper="Unique books in the last 30 days."
-            comparison={stats.thirtyDayComparisons.booksRead}
-          />
-          <StatCard
-            label="Avg weekly sessions"
-            value={stats.thirtyDayAverageWeeklySessions.toFixed(1)}
-            helper={`${stats.thirtyDayReadingSessions} sessions in this window.`}
-            comparison={stats.thirtyDayComparisons.averageWeeklySessions}
-          />
-          <StatCard
-            label="Avg AR level"
-            value={stats.thirtyDayAverageArLevel?.toFixed(1) ?? "None yet"}
-            helper="Based on sessions with AR levels."
-            comparison={stats.thirtyDayComparisons.averageArLevel}
+            comparison={summary.comparisons.averageArLevel}
           />
         </div>
       </section>

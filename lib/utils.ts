@@ -176,6 +176,7 @@ export function calculateChildStats(data: AppData, childId: string) {
     thirtyDayAverageArLevel,
     thirtyDayComparisons: {
       booksRead: getPercentComparison(thirtyDayBooksRead, priorThirtyDayBooksRead, "prior 30 days"),
+      readingSessions: getPercentComparison(thirtyDayLogs.length, priorThirtyDayLogs.length, "prior 30 days"),
       averageWeeklySessions: getPercentComparison(thirtyDayAverageWeeklySessions, priorThirtyDayAverageWeeklySessions, "prior 30 days"),
       averageArLevel:
         typeof thirtyDayAverageArLevel === "number" && typeof priorThirtyDayAverageArLevel === "number"

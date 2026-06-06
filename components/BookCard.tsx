@@ -15,6 +15,7 @@ type BookCardProps = {
   onMoveToReading?: (book: Book) => void;
   showKclsAvailabilityLink?: boolean;
   suggestedSeries?: string;
+  removeLabel?: string;
   onRemove?: (book: Book) => void;
 };
 
@@ -30,6 +31,7 @@ export function BookCard({
   onMoveToReading,
   showKclsAvailabilityLink,
   suggestedSeries,
+  removeLabel = "Remove from Wish List",
   onRemove
 }: BookCardProps) {
   const [arInput, setArInput] = useState(typeof book.arLevel === "number" ? book.arLevel.toFixed(1) : "");
@@ -223,7 +225,7 @@ export function BookCard({
             type="button"
             onClick={() => onRemove(book)}
           >
-            Remove from Wish List
+            {removeLabel}
           </button>
         ) : null}
       </div>

@@ -101,6 +101,17 @@ export default function BooksPage() {
     setSessionBook(undefined);
   }
 
+  function removeReadingBook(book: Book) {
+    const readCount = readCounts[book.id] ?? 0;
+    const message = readCount
+      ? `Remove "${book.title}" and its ${readCount} reading session${readCount === 1 ? "" : "s"}?`
+      : `Remove "${book.title}" from the reading shelf?`;
+
+    if (window.confirm(message)) {
+      removeBook(book.id);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="grid gap-4 rounded-lg border border-ink/10 bg-white p-5 shadow-soft md:grid-cols-[1fr_320px] md:items-center">
@@ -154,6 +165,8 @@ export default function BooksPage() {
         onQuickRemoveRead={selectedChild ? quickRemoveRead : undefined}
         onUpdateSeries={(book, seriesValue) => upsertBook({ ...book, series: seriesValue })}
         onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
+        removeLabel="Remove book"
+        onRemove={removeReadingBook}
       />
 
       <BookShelfSection
@@ -168,6 +181,7 @@ export default function BooksPage() {
         onUpdateSeries={(book, seriesValue) => upsertBook({ ...book, series: seriesValue })}
         onUpdateArLevel={(book, arLevel) => upsertBook({ ...book, arLevel })}
         onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
+        removeLabel="Remove from Wish List"
         onRemove={(book) => removeBook(book.id)}
       />
 
@@ -237,6 +251,7 @@ function BookShelfSection({
   onUpdateArLevel,
   onMoveToArchive,
   onMoveToReading,
+  removeLabel,
   onRemove
 }: {
   title: string;
@@ -251,6 +266,7 @@ function BookShelfSection({
   onUpdateArLevel?: (book: Book, arLevel: number | undefined) => void;
   onMoveToArchive?: (book: Book) => void;
   onMoveToReading?: (book: Book) => void;
+  removeLabel?: string;
   onRemove?: (book: Book) => void;
 }) {
   return (
@@ -277,6 +293,7 @@ function BookShelfSection({
               onMoveToArchive={onMoveToArchive}
               onMoveToReading={onMoveToReading}
               suggestedSeries={inferSeriesForBook(book, allBooks)}
+              removeLabel={removeLabel}
               onRemove={onRemove}
             />
           ))}

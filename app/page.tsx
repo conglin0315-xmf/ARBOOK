@@ -38,6 +38,33 @@ export default function DashboardPage() {
 
       <section>
         <div className="mb-3 flex items-center justify-between gap-4">
+          <h2 className="text-lg font-bold text-ink">Weekly summary</h2>
+          <p className="text-sm text-ink/60">Monday {stats.weeklyRangeStart} through Sunday {stats.weeklyRangeEnd}.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Books read"
+            value={stats.weeklyBooksRead}
+            helper="Unique books this week."
+            comparison={stats.weeklyComparisons.booksRead}
+          />
+          <StatCard
+            label="Reading sessions"
+            value={stats.weeklyReadingSessions}
+            helper="Each reread counts."
+            comparison={stats.weeklyComparisons.readingSessions}
+          />
+          <StatCard
+            label="Avg AR level"
+            value={stats.weeklyAverageArLevel?.toFixed(1) ?? "None yet"}
+            helper="Based on sessions with AR levels."
+            comparison={stats.weeklyComparisons.averageArLevel}
+          />
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between gap-4">
           <h2 className="text-lg font-bold text-ink">Past 30 days</h2>
           <p className="text-sm text-ink/60">Through {stats.thirtyDayRangeEnd}.</p>
         </div>

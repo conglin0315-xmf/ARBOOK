@@ -88,10 +88,16 @@ export function getRecommendedRange(child: ChildProfile, logs: ReadingLog[], boo
 export function calculateChildStats(data: AppData, childId: string) {
   const childLogs = data.logs.filter((log) => log.childId === childId);
   const bookById = new Map(data.books.map((book) => [book.id, book]));
+  const weeklyRange = getMondayToSundayRange();
+  const priorWeeklyRange = getMondayToSundayRange(addDaysToDateString(weeklyRange.start, -7));
+  const weeklyLogs = childLogs.filter((log) => isWithinDateStringRange(log.readDate, weeklyRange.start, weeklyRange.end));
+  const priorWeeklyLogs = childLogs.filter((log) => isWithinDateStringRange(log.readDate, priorWeeklyRange.start, priorWeeklyRange.end));
   const thirtyDayAnchorDate = getLatestLogDate(childLogs) ?? new Date();
   const thirtyDayLogs = childLogs.filter((log) => isWithinLastDays(log.readDate, 30, thirtyDayAnchorDate));
   const priorThirtyDayLogs = childLogs.filter((log) => isWithinDayRange(log.readDate, 60, 31, thirtyDayAnchorDate));
   const readCounts = getReadCountByBook(data.logs, childId);
+  const weeklyReadCounts = getReadCountByBook(weeklyLogs);
+  const priorWeeklyReadCounts = getReadCountByBook(priorWeeklyLogs);
   const thirtyDayReadCounts = getReadCountByBook(thirtyDayLogs);
   const priorThirtyDayReadCounts = getReadCountByBook(priorThirtyDayLogs);
   const completedBooks = Object.keys(readCounts).length;
@@ -100,6 +106,18 @@ export function calculateChildStats(data: AppData, childId: string) {
     .filter((level): level is number => typeof level === "number");
   const averageArLevel = arLevels.length
     ? roundOne(arLevels.reduce((sum, level) => sum + level, 0) / arLevels.length)
+    : undefined;
+  const weeklyArLevels = weeklyLogs
+    .map((log) => bookById.get(log.bookId)?.arLevel)
+    .filter((level): level is number => typeof level === "number");
+  const weeklyAverageArLevel = weeklyArLevels.length
+    ? roundOne(weeklyArLevels.reduce((sum, level) => sum + level, 0) / weeklyArLevels.length)
+    : undefined;
+  const priorWeeklyArLevels = priorWeeklyLogs
+    .map((log) => bookById.get(log.bookId)?.arLevel)
+    .filter((level): level is number => typeof level === "number");
+  const priorWeeklyAverageArLevel = priorWeeklyArLevels.length
+    ? roundOne(priorWeeklyArLevels.reduce((sum, level) => sum + level, 0) / priorWeeklyArLevels.length)
     : undefined;
   const thirtyDayArLevels = thirtyDayLogs
     .map((log) => bookById.get(log.bookId)?.arLevel)
@@ -115,6 +133,8 @@ export function calculateChildStats(data: AppData, childId: string) {
     : undefined;
   const thirtyDayAverageWeeklySessions = roundOne((thirtyDayLogs.length / 30) * 7);
   const priorThirtyDayAverageWeeklySessions = roundOne((priorThirtyDayLogs.length / 30) * 7);
+  const weeklyBooksRead = Object.keys(weeklyReadCounts).length;
+  const priorWeeklyBooksRead = Object.keys(priorWeeklyReadCounts).length;
   const thirtyDayBooksRead = Object.keys(thirtyDayReadCounts).length;
   const priorThirtyDayBooksRead = Object.keys(priorThirtyDayReadCounts).length;
 
@@ -137,16 +157,29 @@ export function calculateChildStats(data: AppData, childId: string) {
     totalBooksRead: completedBooks,
     totalReadingSessions: childLogs.length,
     averageArLevel,
+    weeklyRangeStart: weeklyRange.start,
+    weeklyRangeEnd: weeklyRange.end,
+    weeklyBooksRead,
+    weeklyReadingSessions: weeklyLogs.length,
+    weeklyAverageArLevel,
+    weeklyComparisons: {
+      booksRead: getPercentComparison(weeklyBooksRead, priorWeeklyBooksRead, "prior week"),
+      readingSessions: getPercentComparison(weeklyLogs.length, priorWeeklyLogs.length, "prior week"),
+      averageArLevel:
+        typeof weeklyAverageArLevel === "number" && typeof priorWeeklyAverageArLevel === "number"
+          ? getPercentComparison(weeklyAverageArLevel, priorWeeklyAverageArLevel, "prior week")
+          : undefined
+    },
     thirtyDayBooksRead,
     thirtyDayReadingSessions: thirtyDayLogs.length,
     thirtyDayAverageWeeklySessions,
     thirtyDayAverageArLevel,
     thirtyDayComparisons: {
-      booksRead: getPercentComparison(thirtyDayBooksRead, priorThirtyDayBooksRead),
-      averageWeeklySessions: getPercentComparison(thirtyDayAverageWeeklySessions, priorThirtyDayAverageWeeklySessions),
+      booksRead: getPercentComparison(thirtyDayBooksRead, priorThirtyDayBooksRead, "prior 30 days"),
+      averageWeeklySessions: getPercentComparison(thirtyDayAverageWeeklySessions, priorThirtyDayAverageWeeklySessions, "prior 30 days"),
       averageArLevel:
         typeof thirtyDayAverageArLevel === "number" && typeof priorThirtyDayAverageArLevel === "number"
-          ? getPercentComparison(thirtyDayAverageArLevel, priorThirtyDayAverageArLevel)
+          ? getPercentComparison(thirtyDayAverageArLevel, priorThirtyDayAverageArLevel, "prior 30 days")
           : undefined
     },
     thirtyDayRangeEnd: formatDateOnly(thirtyDayAnchorDate),
@@ -277,16 +310,47 @@ function formatDateOnly(date: Date) {
   return getPacificDateInputValue(date);
 }
 
-function getPercentComparison(current: number, prior: number) {
+function getMondayToSundayRange(anchorDate = getPacificDateInputValue()) {
+  const anchor = parseDateOnly(anchorDate);
+  const day = anchor.getUTCDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const start = addDaysToDateString(anchorDate, mondayOffset);
+  const end = addDaysToDateString(start, 6);
+  return { start, end };
+}
+
+function isWithinDateStringRange(dateValue: string, start: string, end: string) {
+  return dateValue >= start && dateValue <= end;
+}
+
+function addDaysToDateString(dateValue: string, days: number) {
+  const date = parseDateOnly(dateValue);
+  date.setUTCDate(date.getUTCDate() + days);
+  return formatDateOnlyUtc(date);
+}
+
+function parseDateOnly(dateValue: string) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function formatDateOnlyUtc(date: Date) {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getPercentComparison(current: number, prior: number, periodLabel: string) {
   if (prior === 0) {
-    if (current === 0) return { label: "0% vs prior 30 days", direction: "flat" as const };
+    if (current === 0) return { label: `0% vs ${periodLabel}`, direction: "flat" as const };
     return { label: "No prior data", direction: "none" as const };
   }
 
   const percent = Math.round(((current - prior) / prior) * 100);
   const prefix = percent > 0 ? "+" : "";
   return {
-    label: `${prefix}${percent}% vs prior 30 days`,
+    label: `${prefix}${percent}% vs ${periodLabel}`,
     direction: percent > 0 ? ("up" as const) : percent < 0 ? ("down" as const) : ("flat" as const)
   };
 }

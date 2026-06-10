@@ -102,12 +102,22 @@ export default function RecommendationsPage() {
           <p className="text-sm font-bold uppercase tracking-wide text-berry">Recommendations</p>
           <h1 className="mt-2 text-3xl font-bold text-ink">Plan what to read next</h1>
           <p className="mt-2 text-ink/65">
-            Start with books matched to the current reading range, add any missing title your family wants, then keep a Wish List for what to buy or borrow next.
+            Add any book your family wants to track, browse books matched to the current reading range, then keep a Wish List for what to buy or borrow next.
             Comfort reads use AR {recommendations.range.comfort.min.toFixed(1)}-{recommendations.range.comfort.max.toFixed(1)}.
             Next level reads use AR {recommendations.range.nextStep.min.toFixed(1)}-{recommendations.range.nextStep.max.toFixed(1)}, just above the current range.
           </p>
         </div>
         <ChildSelector />
+      </section>
+
+      <section>
+        <div className="mb-3">
+          <h2 className="text-xl font-bold text-ink">Add a Book</h2>
+          <p className="mt-1 text-sm text-ink/60">
+            Add any book here, including books you already own, library books, school books, or titles you found elsewhere. AR/ATOS can auto-fill from your local list when available, but should still be verified.
+          </p>
+        </div>
+        <BookForm onSave={upsertBook} existingBooks={data.books} />
       </section>
 
       <RecommendationSection
@@ -140,16 +150,6 @@ export default function RecommendationsPage() {
         addedKeys={addedDiscoveryKeys}
         onAdd={addDiscovery}
       />
-
-      <section>
-        <div className="mb-3">
-          <h2 className="text-xl font-bold text-ink">Add a Book</h2>
-          <p className="mt-1 text-sm text-ink/60">
-            If the book you want is not recommended above, add it here. You can add books you already own, library books, school books, or titles you found elsewhere. AR/ATOS can auto-fill from your local list when available, but should still be verified.
-          </p>
-        </div>
-        <BookForm onSave={upsertBook} existingBooks={data.books} />
-      </section>
 
       <BookSelectionSection
         title="Wish List"

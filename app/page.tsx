@@ -20,11 +20,11 @@ export default function DashboardPage() {
   const summary = {
     weekly: {
       title: "Weekly summary",
-      range: `Monday ${stats.weeklyRangeStart} through Sunday ${stats.weeklyRangeEnd}.`,
+      range: `Week to date: Monday ${stats.weeklyRangeStart} through ${stats.weeklyRangeEnd}.`,
       booksRead: stats.weeklyBooksRead,
-      booksHelper: "Unique books this week.",
+      booksHelper: `Average ${stats.weeklyAverageBooksPerDay.toFixed(1)} unique books per day.`,
       sessions: stats.weeklyReadingSessions,
-      sessionsHelper: "Each reread counts.",
+      sessionsHelper: `Average ${stats.weeklyAverageSessionsPerDay.toFixed(1)} sessions per day.`,
       averageArLevel: stats.weeklyAverageArLevel,
       comparisons: {
         booksRead: stats.weeklyComparisons.booksRead,
@@ -36,9 +36,9 @@ export default function DashboardPage() {
       title: "Past 30 days",
       range: `Through ${stats.thirtyDayRangeEnd}.`,
       booksRead: stats.thirtyDayBooksRead,
-      booksHelper: "Unique books in the last 30 days.",
+      booksHelper: `Average ${stats.thirtyDayAverageBooksPerDay.toFixed(1)} unique books per day.`,
       sessions: stats.thirtyDayReadingSessions,
-      sessionsHelper: `Avg ${stats.thirtyDayAverageWeeklySessions.toFixed(1)} sessions per week.`,
+      sessionsHelper: `Average ${stats.thirtyDayAverageWeeklySessions.toFixed(1)} sessions per week.`,
       averageArLevel: stats.thirtyDayAverageArLevel,
       comparisons: {
         booksRead: stats.thirtyDayComparisons.booksRead,

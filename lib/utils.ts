@@ -88,8 +88,11 @@ export function getRecommendedRange(child: ChildProfile, logs: ReadingLog[], boo
 export function calculateChildStats(data: AppData, childId: string) {
   const childLogs = data.logs.filter((log) => log.childId === childId);
   const bookById = new Map(data.books.map((book) => [book.id, book]));
-  const weeklyRange = getMondayToSundayRange();
-  const priorWeeklyRange = getMondayToSundayRange(addDaysToDateString(weeklyRange.start, -7));
+  const weeklyRange = getWeekToDateRange();
+  const priorWeeklyRange = {
+    start: addDaysToDateString(weeklyRange.start, -7),
+    end: addDaysToDateString(weeklyRange.end, -7)
+  };
   const weeklyLogs = childLogs.filter((log) => isWithinDateStringRange(log.readDate, weeklyRange.start, weeklyRange.end));
   const priorWeeklyLogs = childLogs.filter((log) => isWithinDateStringRange(log.readDate, priorWeeklyRange.start, priorWeeklyRange.end));
   const thirtyDayAnchorDate = getLatestLogDate(childLogs) ?? new Date();
@@ -135,8 +138,12 @@ export function calculateChildStats(data: AppData, childId: string) {
   const priorThirtyDayAverageWeeklySessions = roundOne((priorThirtyDayLogs.length / 30) * 7);
   const weeklyBooksRead = Object.keys(weeklyReadCounts).length;
   const priorWeeklyBooksRead = Object.keys(priorWeeklyReadCounts).length;
+  const weeklyDayCount = getInclusiveDateSpan(weeklyRange.start, weeklyRange.end);
+  const weeklyAverageBooksPerDay = roundOne(weeklyBooksRead / weeklyDayCount);
+  const weeklyAverageSessionsPerDay = roundOne(weeklyLogs.length / weeklyDayCount);
   const thirtyDayBooksRead = Object.keys(thirtyDayReadCounts).length;
   const priorThirtyDayBooksRead = Object.keys(priorThirtyDayReadCounts).length;
+  const thirtyDayAverageBooksPerDay = roundOne(thirtyDayBooksRead / 30);
 
   const mostReadEntry = Object.entries(readCounts).sort((a, b) => b[1] - a[1])[0];
   const mostReadBook = mostReadEntry ? bookById.get(mostReadEntry[0]) : undefined;
@@ -161,17 +168,20 @@ export function calculateChildStats(data: AppData, childId: string) {
     weeklyRangeEnd: weeklyRange.end,
     weeklyBooksRead,
     weeklyReadingSessions: weeklyLogs.length,
+    weeklyAverageBooksPerDay,
+    weeklyAverageSessionsPerDay,
     weeklyAverageArLevel,
     weeklyComparisons: {
-      booksRead: getPercentComparison(weeklyBooksRead, priorWeeklyBooksRead, "prior week"),
-      readingSessions: getPercentComparison(weeklyLogs.length, priorWeeklyLogs.length, "prior week"),
+      booksRead: getPercentComparison(weeklyBooksRead, priorWeeklyBooksRead, "same days last week"),
+      readingSessions: getPercentComparison(weeklyLogs.length, priorWeeklyLogs.length, "same days last week"),
       averageArLevel:
         typeof weeklyAverageArLevel === "number" && typeof priorWeeklyAverageArLevel === "number"
-          ? getPercentComparison(weeklyAverageArLevel, priorWeeklyAverageArLevel, "prior week")
+          ? getPercentComparison(weeklyAverageArLevel, priorWeeklyAverageArLevel, "same days last week")
           : undefined
     },
     thirtyDayBooksRead,
     thirtyDayReadingSessions: thirtyDayLogs.length,
+    thirtyDayAverageBooksPerDay,
     thirtyDayAverageWeeklySessions,
     thirtyDayAverageArLevel,
     thirtyDayComparisons: {
@@ -311,12 +321,12 @@ function formatDateOnly(date: Date) {
   return getPacificDateInputValue(date);
 }
 
-function getMondayToSundayRange(anchorDate = getPacificDateInputValue()) {
+function getWeekToDateRange(anchorDate = getPacificDateInputValue()) {
   const anchor = parseDateOnly(anchorDate);
   const day = anchor.getUTCDay();
   const mondayOffset = day === 0 ? -6 : 1 - day;
   const start = addDaysToDateString(anchorDate, mondayOffset);
-  const end = addDaysToDateString(start, 6);
+  const end = anchorDate;
   return { start, end };
 }
 
@@ -328,6 +338,13 @@ function addDaysToDateString(dateValue: string, days: number) {
   const date = parseDateOnly(dateValue);
   date.setUTCDate(date.getUTCDate() + days);
   return formatDateOnlyUtc(date);
+}
+
+function getInclusiveDateSpan(start: string, end: string) {
+  const startTime = parseDateOnly(start).getTime();
+  const endTime = parseDateOnly(end).getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+  return Math.max(1, Math.round((endTime - startTime) / dayMs) + 1);
 }
 
 function parseDateOnly(dateValue: string) {

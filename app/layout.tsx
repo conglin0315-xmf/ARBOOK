@@ -30,8 +30,8 @@ export const viewport: Viewport = {
 
 const navItems = [
   { href: "/", label: "Dashboard" },
-  { href: "/books", label: "Sessions" },
-  { href: "/recommendations", label: "Recommendations" },
+  { href: "/books", label: "Shelf & Tracking" },
+  { href: "/recommendations", label: "Wish List & Recs" },
   { href: "/settings", label: "Settings" }
 ];
 

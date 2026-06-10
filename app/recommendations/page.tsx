@@ -62,9 +62,6 @@ export default function RecommendationsPage() {
   const recommendations = recommendBooks(data, selectedChild);
   const seriesProgressions = getSeriesProgressions(data, selectedChild);
   const readCounts = getReadCountByBook(data.logs, selectedChild.id);
-  const readingBooks = data.books
-    .filter((book) => book.shelf !== "wishlist" && book.shelf !== "archive")
-    .sort((a, b) => a.title.localeCompare(b.title));
   const wishListBooks = data.books
     .filter((book) => book.shelf === "wishlist")
     .sort((a, b) => a.title.localeCompare(b.title));
@@ -99,7 +96,7 @@ export default function RecommendationsPage() {
     <div className="space-y-6">
       <section className="grid gap-4 rounded-lg border border-ink/10 bg-white p-5 shadow-soft md:grid-cols-[1fr_320px] md:items-center">
         <div>
-          <p className="text-sm font-bold uppercase tracking-wide text-berry">Recommendations</p>
+          <p className="text-sm font-bold uppercase tracking-wide text-berry">Wish List & Recs</p>
           <h1 className="mt-2 text-3xl font-bold text-ink">Plan what to read next</h1>
           <p className="mt-2 text-ink/65">
             Add any book your family wants to track, browse books matched to the current reading range, then keep a Wish List for what to buy or borrow next.
@@ -162,16 +159,6 @@ export default function RecommendationsPage() {
         error={discoveryError}
         addedKeys={addedDiscoveryKeys}
         onAdd={addDiscovery}
-      />
-
-      <BookSelectionSection
-        title="Current Reading Selection"
-        helper="Books already in the active reading list. Session logging lives in the Sessions tab."
-        books={readingBooks}
-        allBooks={data.books}
-        readCounts={readCounts}
-        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
-        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
       />
 
       <BookSelectionSection

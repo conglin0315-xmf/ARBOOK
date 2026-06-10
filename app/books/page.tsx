@@ -125,8 +125,8 @@ export default function BooksPage() {
     <div className="space-y-6">
       <section className="grid gap-4 rounded-lg border border-ink/10 bg-white p-5 shadow-soft md:grid-cols-[1fr_320px] md:items-center">
         <div>
-          <p className="text-sm font-bold uppercase tracking-wide text-berry">Sessions</p>
-          <h1 className="mt-2 text-3xl font-bold text-ink">Track today's reads</h1>
+          <p className="text-sm font-bold uppercase tracking-wide text-berry">Shelf & Tracking</p>
+          <h1 className="mt-2 text-3xl font-bold text-ink">Current bookshelf & tracking</h1>
           <p className="mt-2 text-ink/65">
             Use + for a quick reread count, or add session details when you want difficulty, liked score, quiz, and notes.
           </p>
@@ -159,7 +159,7 @@ export default function BooksPage() {
           </div>
         </div>
         <p className="mt-3 text-sm text-ink/60">
-          This searches books already saved in your shelves. To add a new book first, go to the Recommendations tab. Books are ranked by most recent read date first, then read count, then alphabetically.
+          This searches books already saved in your shelves. To add a new book first, go to Wish List & Recs. Books are ranked by most recent read date first, then read count, then alphabetically.
         </p>
       </section>
 

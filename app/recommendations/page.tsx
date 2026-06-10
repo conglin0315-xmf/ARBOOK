@@ -120,6 +120,19 @@ export default function RecommendationsPage() {
         <BookForm onSave={upsertBook} existingBooks={data.books} />
       </section>
 
+      <BookSelectionSection
+        title="Wish List"
+        helper="Books to consider buying or borrowing next. Use the KCLS link on each card to check live library availability, copies, and holds."
+        books={wishListBooks}
+        allBooks={data.books}
+        readCounts={readCounts}
+        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
+        onUpdateArLevel={(book, arLevel) => upsertBook({ ...book, arLevel })}
+        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
+        showKclsAvailabilityLinks
+        onRemove={(book) => removeBook(book.id)}
+      />
+
       <RecommendationSection
         title="Comfort Reads"
         helper="Start here. These are not-yet-saved local catalog books whose listed BL range overlaps the current reading range."
@@ -149,19 +162,6 @@ export default function RecommendationsPage() {
         error={discoveryError}
         addedKeys={addedDiscoveryKeys}
         onAdd={addDiscovery}
-      />
-
-      <BookSelectionSection
-        title="Wish List"
-        helper="Books to consider buying or borrowing next. Use the KCLS link on each card to check live library availability, copies, and holds."
-        books={wishListBooks}
-        allBooks={data.books}
-        readCounts={readCounts}
-        onUpdateSeries={(book, series) => upsertBook({ ...book, series })}
-        onUpdateArLevel={(book, arLevel) => upsertBook({ ...book, arLevel })}
-        onMoveToArchive={(book) => upsertBook({ ...book, shelf: "archive" })}
-        showKclsAvailabilityLinks
-        onRemove={(book) => removeBook(book.id)}
       />
 
       <BookSelectionSection

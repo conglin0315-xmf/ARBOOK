@@ -15,6 +15,10 @@ type BookCardProps = {
   onMoveToReading?: (book: Book) => void;
   showKclsAvailabilityLink?: boolean;
   suggestedSeries?: string;
+  readingActivity?: {
+    lastReadDate?: string;
+    daysSinceLastRead?: number;
+  };
   removeLabel?: string;
   onRemove?: (book: Book) => void;
 };
@@ -31,6 +35,7 @@ export function BookCard({
   onMoveToReading,
   showKclsAvailabilityLink,
   suggestedSeries,
+  readingActivity,
   removeLabel = "Remove from Wish List",
   onRemove
 }: BookCardProps) {
@@ -71,6 +76,25 @@ export function BookCard({
           <Badge key={theme}>{theme}</Badge>
         ))}
       </div>
+
+      {readingActivity ? (
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-lg border border-ink/10 bg-cream p-3">
+          <div>
+            <p className="text-xs font-semibold text-ink/55">Last read</p>
+            <p className="mt-1 text-sm font-bold text-ink">{readingActivity.lastReadDate ?? "Not read yet"}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-ink/55">Days not read</p>
+            <p className="mt-1 text-sm font-bold text-ink">
+              {typeof readingActivity.daysSinceLastRead === "number"
+                ? readingActivity.daysSinceLastRead === 0
+                  ? "Today"
+                  : `${readingActivity.daysSinceLastRead} day${readingActivity.daysSinceLastRead === 1 ? "" : "s"}`
+                : "No reads yet"}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-4 grid gap-3">
         {onUpdateSeries ? (

@@ -25,6 +25,15 @@ export default function BooksPage() {
       return acc;
     }, {});
   }, [data.logs, selectedChild?.id]);
+  const latestReadDateByBook = useMemo(() => {
+    return data.logs.reduce<Record<string, string>>((acc, log) => {
+      if (selectedChild?.id && log.childId !== selectedChild.id) return acc;
+      if (!acc[log.bookId] || compareDateInputs(log.readDate, acc[log.bookId]) > 0) {
+        acc[log.bookId] = log.readDate;
+      }
+      return acc;
+    }, {});
+  }, [data.logs, selectedChild?.id]);
   const themes = Array.from(new Set(data.books.flatMap((book) => book.themes))).sort();
   const filteredBooks = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -160,6 +169,8 @@ export default function BooksPage() {
         books={readingBooks}
         allBooks={data.books}
         readCounts={readCounts}
+        latestReadDateByBook={latestReadDateByBook}
+        showReadingActivity
         onMarkRead={selectedChild ? setSessionBook : undefined}
         onQuickAddRead={selectedChild ? quickAddRead : undefined}
         onQuickRemoveRead={selectedChild ? quickRemoveRead : undefined}
@@ -244,6 +255,8 @@ function BookShelfSection({
   books,
   allBooks,
   readCounts,
+  latestReadDateByBook,
+  showReadingActivity,
   onMarkRead,
   onQuickAddRead,
   onQuickRemoveRead,
@@ -259,6 +272,8 @@ function BookShelfSection({
   books: Book[];
   allBooks: Book[];
   readCounts: Record<string, number>;
+  latestReadDateByBook?: Record<string, string>;
+  showReadingActivity?: boolean;
   onMarkRead?: (book: Book) => void;
   onQuickAddRead?: (book: Book) => void;
   onQuickRemoveRead?: (book: Book) => void;
@@ -285,6 +300,7 @@ function BookShelfSection({
               key={book.id}
               book={book}
               readCount={readCounts[book.id] ?? 0}
+              readingActivity={showReadingActivity ? getReadingActivity(book.id, latestReadDateByBook) : undefined}
               onMarkRead={onMarkRead}
               onQuickAddRead={onQuickAddRead}
               onQuickRemoveRead={onQuickRemoveRead}
@@ -357,6 +373,30 @@ function normalizeText(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function getReadingActivity(bookId: string, latestReadDateByBook?: Record<string, string>) {
+  const lastReadDate = latestReadDateByBook?.[bookId];
+  return {
+    lastReadDate,
+    daysSinceLastRead: lastReadDate ? getDaysSinceDate(lastReadDate) : undefined
+  };
+}
+
+function getDaysSinceDate(dateValue: string) {
+  const today = parseDateInput(getPacificDateInputValue());
+  const readDate = parseDateInput(dateValue);
+  const dayMs = 24 * 60 * 60 * 1000;
+  return Math.max(0, Math.round((today.getTime() - readDate.getTime()) / dayMs));
+}
+
+function compareDateInputs(a: string, b: string) {
+  return parseDateInput(a).getTime() - parseDateInput(b).getTime();
+}
+
+function parseDateInput(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 function StatusButton({
